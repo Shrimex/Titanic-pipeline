@@ -1,0 +1,14 @@
+{
+    "best_cv_model": "random_forest",
+    "best_cv_f1": 0.768796280473912,
+    "best_cv_accuracy": 0.8305002824681438,
+    "selected_final_model": "random_forest",
+    "best_params": {
+        "max_depth": 5,
+        "max_features": "sqrt",
+        "min_samples_leaf": 2,
+        "min_samples_split": 5,
+        "n_estimators": 300
+    },
+    "best_search_f1": 0.7743239994385032
+}
