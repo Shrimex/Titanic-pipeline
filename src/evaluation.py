@@ -5,13 +5,14 @@ from sklearn.model_selection import StratifiedKFold, cross_val_score
 
 
 def evaluate_models(
+    
     models: dict,
     X: pd.DataFrame,
     y: pd.Series,
     n_folds: int = 5,
     random_state: int = 42,
 ) -> pd.DataFrame:
-
+    '''Функция для вычисления метрик моделей'''
     results = []
 
     for model_name, model in models.items():

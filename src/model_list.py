@@ -11,6 +11,7 @@ from src.neural_network import TitanicNN
 
 
 def get_models(random_state: int = 42) -> dict:
+    '''Список моделей для решения задачи классификации'''
     models = {
         "dummy_classifier": DummyClassifier(strategy='most_frequent'),
 

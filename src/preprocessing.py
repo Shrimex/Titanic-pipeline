@@ -17,6 +17,20 @@ def drop_id(X_train: pd.DataFrame, X_test: pd.DataFrame, id_col: str):
     return X_train, X_test
 
 class GroupImputer(BaseEstimator, TransformerMixin):
+    '''Заполняет пропуски статистикой по группе.
+
+    Вся статистика вычисляется только на train в fit(),
+    что предотвращает утечку данных при кросс-валидации.
+    Если группа не встречалась при обучении — используется глобальный fallback.
+
+    Параметры
+    ----------
+    group_col : str
+        Колонка по которой группируем (например 'Initial').
+    target_col : str
+        Колонка в которой заполняем пропуски (например 'Age').
+    strategy : str
+        Стратегия агрегации: 'median' или 'mean'.'''
     def __init__(self, group_col: str, target_col: str, strategy: str = "median"):
         self.group_col = group_col
         self.target_col = target_col
@@ -52,6 +66,16 @@ class GroupImputer(BaseEstimator, TransformerMixin):
         return X
 
 def encode_features(df: pd.DataFrame) -> pd.DataFrame:
+    ''' Кодирует категориальные и числовые признаки.
+
+    - Sex, Embarked, Initial — ручной маппинг в числа
+    - Age_band  — возраст разбитый на 5 бинов (0-16, 16-32, ..., 64-100)
+    - Is_Child  — бинарный флаг для пассажиров младше 16 лет
+    - Fare_cat  — стоимость билета разбитая на 4 категории по перцентилям
+    - Deck      — палуба закодированная в числа (U=0, A=1, ..., G=7)
+
+    Функция stateless — не требует обучения, безопасна для применения
+    отдельно на train и test.'''
     df = df.copy()
 
     df['Sex'] = df['Sex'].map({'male': 0, 'female': 1})
@@ -89,6 +113,18 @@ def preprocess_features(
     X_test: pd.DataFrame,
     id_col: str,
 ):
+    '''Полный preprocessing pipeline без утечки данных.
+
+    Порядок шагов:
+    1. Удаление ID колонки.
+    2. Feature engineering на объединённом train+test (stateless операции).
+    3. Заполнение пропусков — только на train:
+       - Age  — медиана по группе титула (Initial)
+       - Fare — медиана по классу билета (Pclass)
+       - Embarked — мода
+    4. Кодирование признаков.
+    5. Удаление исходных колонок заменённых новыми признаками.
+    6. Выравнивание колонок train и test.'''
     X_train, X_test = drop_id(X_train, X_test, id_col)
     train_rows = X_train.shape[0]
     full_df = pd.concat([X_train, X_test], axis=0).reset_index(drop=True)
