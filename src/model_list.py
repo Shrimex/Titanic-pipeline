@@ -6,6 +6,8 @@ from sklearn.tree import DecisionTreeClassifier
 from catboost import CatBoostClassifier
 from lightgbm import LGBMClassifier
 from xgboost import XGBClassifier
+from sklearn.ensemble import VotingClassifier, StackingClassifier
+from sklearn.linear_model import LogisticRegression
 
 from src.neural_network import TitanicNN
 
@@ -98,6 +100,35 @@ def get_models(random_state: int = 42) -> dict:
                 "factor": 0.5,
                 "patience": 5
             },
+        ),
+        "voting": VotingClassifier(
+            estimators=[
+                ('lgb', LGBMClassifier(n_estimators=200, learning_rate=0.1, max_depth=6, random_state=random_state, verbose=-1)),
+                ('cat', CatBoostClassifier(iterations=200, learning_rate=0.1, depth=6, verbose=0, random_state=random_state)),
+                ('xgb', XGBClassifier(n_estimators=200, learning_rate=0.1, max_depth=6, random_state=random_state, verbosity=0)),
+            ],
+            voting='soft',
+        ),
+
+        "stacking_ridge": StackingClassifier(
+            estimators=[
+                ('lgb', LGBMClassifier(n_estimators=200, learning_rate=0.1, max_depth=6, random_state=random_state, verbose=-1)),
+                ('cat', CatBoostClassifier(iterations=200, learning_rate=0.1, depth=6, verbose=0, random_state=random_state)),
+                ('xgb', XGBClassifier(n_estimators=200, learning_rate=0.1, max_depth=6, random_state=random_state, verbosity=0)),
+                ('rf',  RandomForestClassifier(n_estimators=100, max_depth=3, random_state=random_state)),
+            ],
+            final_estimator=LogisticRegression(),
+        ),
+
+        "stacking_lasso": StackingClassifier(
+            estimators=[
+                ('lgb', LGBMClassifier(n_estimators=200, learning_rate=0.1, max_depth=6, random_state=random_state, verbose=-1)),
+                ('cat', CatBoostClassifier(iterations=200, learning_rate=0.1, depth=6, verbose=0, random_state=random_state)),
+                ('xgb', XGBClassifier(n_estimators=200, learning_rate=0.1, max_depth=6, random_state=random_state, verbosity=0)),
+                ('rf',  RandomForestClassifier(n_estimators=100, max_depth=3, random_state=random_state)),
+            ],
+            final_estimator=LogisticRegression(l1_ratio=1.0, solver='saga', max_iter=5000),
+            cv=5,
         ),
     }
     return models
